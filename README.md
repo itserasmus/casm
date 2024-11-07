@@ -36,7 +36,7 @@ Execution successful (68ms)
 ```
 7. If this does not work, make sure that casm.exe exists. If the error persists, refer to the troubleshooting section.
 ### Premakes:
-- premakes for Windows, macOS and Linux can be found in `./pre_builds/`
+- A premake for Windows x64_86 can be found in `./pre_builds/`
 
 
 ## Usage:
