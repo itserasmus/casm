@@ -28,14 +28,14 @@ void set_defaults() {
 
 bool create_settings_ini_if_not_exist() {
     // check if it exists first
-    std::ifstream file(settings_path);
+    std::ifstream file(get_settings_absolute_path());
     if(file.good()) {
         file.close();
         return true;
     }
     file.close();
     // else create it
-    std::ofstream ini_file(settings_path);
+    std::ofstream ini_file(get_settings_absolute_path());
     if(!ini_file.good()) {
         return false;
     }
