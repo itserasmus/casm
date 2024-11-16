@@ -4,6 +4,7 @@ project(casm)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 # Source files
 set(SOURCES
@@ -25,11 +26,11 @@ set(HEADERS
 # Add executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-# ===== |\      /| |===\    /===\   |===\  =====   /\     |\    | =====
-#   |   | \    / | |    |  /     \  |    |   |    /  \    | \   |   |
-#   |   |  \  /  | |===/  |       | |===/    |   /====\   |  \  |   |
-#   |   |   \/   | |       \     /  |   \    |   |    |   |   \ |   |
-# ===== |        | |        \===/   |    \   |   |    |   |    \|   |
+# ---|--- \       / |------\  /-----\  |------\ ---------     /\     \       | --------- |   
+#    |    | \   / | |      | |       | |      |     |        /  \    | \     |     |     |   
+#    |    |   \   | |------/ |       | |-----/      |       /____\   |   \   |     |     |   
+#    |    |       | |        |       | |     \      |      /      \  |     \ |     |
+# ___|___ |       | |         \_____/  |      \     |     /        \ |       \     |     O 
 
 # ---------------------------------------
 # | THIS IS WHERE THE BOOST ROOT IS SET |

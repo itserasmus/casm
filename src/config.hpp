@@ -14,13 +14,16 @@ int config_settings(char** flags, char** args, int n_flags, int n_args) {
             colout << print_config_help_msg;
             return 0;
         }
+        
+        if(strcmp(args[0], "create-local") == 0) {
+            colout << CYAN << "Creating local settings file.";
+            return create_local_settings_ini() ? 0 : 1;
+        }
         if(strncmp(args[0], "delete-hotlist-", 15) == 0) {
             // delete-hotlist-n and delete-hotlist-all
             if(strcmp(args[0], "delete-hotlist-all") == 0) {
-                colout << YELLOW << "Clearing hotlist. This action cannot be undone.\n";
-                colout << "Are you sure you want to clear the hotlist (y/n): ";
-                char c = getchar();
-                if(c == 'y' || c == 'Y') {
+                colout << CYAN << "Clearing hotlist. This action cannot be undone.\n";
+                if(get_y_n("Are you sure you want to clear the hotlist")) {
                     for(int i = 0; i < n_hotlist; i++) {
                         delete[] hotlist[i];
                     }
@@ -39,10 +42,8 @@ int config_settings(char** flags, char** args, int n_flags, int n_args) {
                     colout << RED << "Invalid hotlist index";
                     return 1;
                 }
-                colout << YELLOW << "Deleting hotlist index " << index << ". The hotlist path being deleted is: " << hotlist[index];
-                colout << "Are you sure you want to delete this path? (y/n): ";
-                char c = getchar();
-                if(c == 'y' || c == 'Y') {
+                colout << CYAN << "Deleting hotlist index " << index << ". The hotlist path being deleted is: " << hotlist[index];
+                if(get_y_n("Are you sure you want to delete this path?")) {
                     delete[] hotlist[index];
                     for(int i = index; i < n_hotlist - 1; i++) {
                         hotlist[i] = hotlist[i + 1];
@@ -64,45 +65,39 @@ int config_settings(char** flags, char** args, int n_flags, int n_args) {
         // handles syntax:
         // casm -config delete-hotlist-n
         // casm -config setting-name value
-        // casm -config hotlist-n path
-        // casm -config add-path path
+        // casm -config add-hotlist-path path
         // casm -config reset-settings
+        // casm -config create-local
         // possible settings names:
         //    - always-exec
         //    - profile-level
+        //    - optimization-level
+        //    - c-cpp-compiler
+        //    - debug-mode
+        //    - input-path
+        //    - output-path
         if(strcmp(args[0], "always-exec") == 0) {
             always_exec = strcmp(args[1], "true") == 0;
             return save_settings_and_exit();
         } else if(strcmp(args[0], "profile-level") == 0) {
             profile_level = args[1][0]=='2'?2:args[1][0]=='0'?0:1;
             return save_settings_and_exit();
-        } else if(strncmp(args[0], "hotlist-", 8) == 0) {
-            int index = strtol(args[0] + 8, nullptr, 10);
-            if(index < 0) {
-                colout << RED << "Invalid hotlist index";
-                return 1;
-            }
-            if(index >= n_hotlist) {
-                colout << YELLOW << "Hotlist index out of bounds. Add to end? (y/n): ";
-                char c = getchar();
-                if(c == 'y' || c == 'Y') {
-                    char** new_hotlist = new char*[n_hotlist + 1];
-                    for(int i = 0; i < n_hotlist; i++) {
-                        new_hotlist[i] = hotlist[i];
-                    }
-                    delete[] hotlist;
-                    hotlist = new_hotlist;
-                    n_hotlist++;
-                    return save_settings_and_exit();
-                } else {
-                    return 0;
-                }
-            }
-            delete[] hotlist[index];
-            hotlist[index] = new char[strlen(args[1]) + 1];
-            strcpy(hotlist[index], args[1]);
+        } else if(strcmp(args[0], "optimization-level") == 0) {
+            optimization_level = strtol(args[1], nullptr, 10);
             return save_settings_and_exit();
-        } else if(strcmp(args[0], "add-path") == 0) {
+        } else if(strcmp(args[0], "c-cpp-compiler") == 0) {
+            c_cpp_compiler = strcmp(args[1], "mingw") == 0 || strcmp(args[1], "gcc") == 0 || strcmp(args[1], "g++") == 0 ? "gcc" : "clang";
+            return save_settings_and_exit();
+        } else if(strcmp(args[0], "debug-mode") == 0) {
+            debug_mode = strcmp(args[1], "true") == 0;
+            return save_settings_and_exit();
+        } else if(strcmp(args[0], "input-path") == 0) {
+            input_path = args[1];
+            return save_settings_and_exit();
+        } else if(strcmp(args[0], "output-path") == 0) {
+            output_path = args[1];
+            return save_settings_and_exit();
+        } else if(strcmp(args[0], "add-hotlist-path") == 0) {
             char** new_hotlist = new char*[n_hotlist + 1];
             for(int i = 0; i < n_hotlist; i++) {
                 new_hotlist[i] = hotlist[i];
@@ -110,12 +105,11 @@ int config_settings(char** flags, char** args, int n_flags, int n_args) {
             delete[] hotlist;
             hotlist = new_hotlist;
             n_hotlist++;
+            hotlist[n_hotlist - 1] = args[1];
             return save_settings_and_exit();
         } else if(strcmp(args[0], "reset-settings") == 0) {
-            colout << YELLOW << "Resetting settings to default values. This operation cannot be undone.";
-            colout << "Are you sure you want to reset settings? (y/n): ";
-            char c = getchar();
-            if(c == 'y' || c == 'Y') {
+            colout << CYAN << "Resetting settings to default values. This operation cannot be undone.";
+            if(get_y_n("Are you sure you want to reset settings?")) {
                 set_defaults();
                 return save_settings_and_exit();
             } else {
@@ -128,9 +122,7 @@ int config_settings(char** flags, char** args, int n_flags, int n_args) {
         }
     } else {
         colout << RED << "Could not read settings";
-        colout <<  YELLOW << "Override with default settings? (y/n): ";
-        char c = getchar();
-        if(c == 'y' || c == 'Y') {
+        if(get_y_n("Override with default settings?")) {
             set_defaults();
             return save_settings_and_exit();
         } else {

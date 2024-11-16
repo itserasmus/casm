@@ -12,25 +12,45 @@ Features:
 - Compilation & Execution: Offers optional automatic execution upon successful compilation.
 - Profiling: Measures execution time of compiled programs, with varying levels of profiling detail.
 - Hotlist Directory Management: Allows output to specific directories in a configurable hotlist.
-- Error Handling: Displays clear error messages for compilation issues and invalid commands.
-- Configurable Settings: Configuration options, including preferences and hotlist management.
+- Flexible Configurations: Customize compiler settings, flags, and paths via a `__casm_settings.ini` file.
+- Command-Line Simplicity: Clean, intuitive syntax for managing settings and running commands.
+- Configurable Output: Supports various naming conventions and directories for output files.
+- Error Handling: Provides clear error messages for invalid commands, missing files, or compilation issues.
 
 Usage:
-    casm [-options] <source_file> [<output_file>]
+    casm [-options] [<source_file>] [<output_file>]
 
-Options:
--cpp, -c++     : Specify language as C++
--c             : Specify language as C
+Compilation Options:
+-cpp, -c++     : Specify language as C++.
+-c             : Specify language as C.
 
 -exec          : Force automatic execution after compilation.
 -no-exec       : Prevent automatic execution after compilation.
+
 -no-profile    : Preven profiling.
 -profile       : Profiles execution time of the compiled program.
 -profile-all   : Profiles both compilation and execution time.
+
 -to-dir-n      : Output to directory hotlist[n].
 
--config        : Confiigure settings and preferences.
+-debug         : Build with debugging symbols.
+-release       : Build with optimizations.
 
+-mingw, -gcc, 
+-g++, -clang   : Specify compiler to use.
+
+
+Configuration:
+casm -config          : Confiigure settings and preferences.
+    delete-hotlist-n  : Delete nth element of the hotlist.
+    add-hotlist-path  : Add a path to the hotlist.
+    reset-settings    : Reset all settings to default.
+    create-local      : Create a local settings file.
+    setting-name <value> : Set a specific setting.
+    See `casm -help config` for more details.
+
+
+Help:
 -help          : Display this help message.
 -help config   : Display help message for configuration options.
 -help commands : Display detailed usage of each command.
@@ -51,11 +71,6 @@ using namespace std;
 
 
 int main(int argc, char** argv) {
-    if(argc < 2) { // no params
-        colout << print_proper_use_msg;
-        return 1;
-    }
-
     // parse argv
     int n_flags = 0;
     int n_args = 0;
@@ -90,12 +105,6 @@ int main(int argc, char** argv) {
         } else if(strcmp(f, "-config") == 0 || strcmp(f, "--config") == 0) {
             return config_settings(flags, args, n_flags, n_args);
         }
-    }
-
-    if(n_args < 1) {
-        colout << print_proper_use_msg;
-        return 1;
-
     }
     
     return compile(flags, args, n_flags, n_args);

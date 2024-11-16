@@ -140,6 +140,7 @@ class ColorOut {
     private:
     bool supports_brightness = true;
     const char** cols;
+    bool enabled = true;
     public:
     ColorOut() {
         #if defined(__unix__) || defined(__APPLE__)
@@ -154,73 +155,106 @@ class ColorOut {
     }
 
     ColorOut& operator<<(const char* value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%s", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%s", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const int value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%d", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%d", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const float value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%f", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%f", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const double value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%f", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%f", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const char value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%c", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%c", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const bool value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%s", value ? "true" : "false");
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%s", value ? "true" : "false");
+        }
         return *this;
     }
     ColorOut& operator<<(const unsigned int value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%u", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%u", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const long value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%ld", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%ld", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const long long value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%lld", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%lld", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const unsigned long value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%lu", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%lu", value);
+        }
         return *this;
     }
     ColorOut& operator<<(const unsigned long long value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%llu", value);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%llu", value);
+        }
         return *this;
     }
     
 
     ColorOut& operator<<(const std::string& value) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf("%s", value.c_str());
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf("%s", value.c_str());
+        }
         return *this;
     }
 
 
     ColorOut& operator<<(const COLOR color) {
-        std::lock_guard<std::mutex> lock(printf_mtx);
-        printf(cols[color]);
+        if(enabled) {
+            std::lock_guard<std::mutex> lock(printf_mtx);
+            printf(cols[color]);
+        }
         return *this;
+    }
+
+    void disable() {
+        enabled = false;
+    }
+    void enable() {
+        enabled = true;
     }
 };
 

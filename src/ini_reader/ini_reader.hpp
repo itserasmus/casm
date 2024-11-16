@@ -209,6 +209,10 @@ class INIReader {
  * @brief Namespace for functions that parse `char*` into other types
  */
 namespace ini_parse {
+    /// @brief Parses a string into a string
+    /// @param str The string to parse
+    /// @return The parsed string
+    char* parse_string(const char* str);
     /// @brief Parsess a string into an integer
     /// @param str The string to parse
     /// @return The parsed integer

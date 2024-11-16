@@ -26,30 +26,55 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
     // -no-profile : prevents all profiling
     // -profile : profiles only execution time of output
     // -profile-all : profiles output as well
+    // -mingw/-gcc/-g++/-clang : compiler to use
+    // -debug/-release : build type
+
+    // If input/output path not specified, it wil read from __casm_settings.ini. If not found,
+    // it will infer output from input file name.
  
     init_settings();
+    if(n_args < 1 && input_path == nullptr) {
+        colout << print_proper_use_msg;
+        return 1;
+    }
+
     bool exec_on_compile = always_exec;
     bool profile_all = profile_level >= 2;
     bool profile = profile_level >= 1;
+
+    char* compiler = const_cast<char*>(c_cpp_compiler);
+    bool debug_build = debug_mode;
     
     char* curr_dir = get_curr_dir();
 
     // path file is being read from (including filename)
-    char* source_path = is_path_absolute(args[0]) ? args[0] : add_str(curr_dir, args[0]);
+    char* source_path = (n_args >= 1? 
+        is_path_absolute(args[0]) ? args[0] : add_str(curr_dir, args[0])
+        : is_path_absolute(input_path) ? dup_str(input_path) : add_str(curr_dir, input_path));
+    if(n_args < 1) {
+        colout << RESET << "Input file not specified. Compiling file " << CYAN << input_path << "\n";
+    }
+
     // path file will be saved to (excluding filename)
     char* dest_dir = nullptr;
     char* dest_name = nullptr;
-    char* dest_path = nullptr;
+    char* dest_path = const_cast<char*>(output_path);
 
     int n_alloc_compiler_flags_str = 10;
     int len_compiler_flags_str = 0;
     char* compiler_flags_str = new char[n_alloc_compiler_flags_str];
     compiler_flags_str[0] = '\0';
 
+    int EXIT_CODE = 0;
+
     // -1 for autochecking
     // 0 for c
     // 1 for c++
     int lang = -1;
+
+    char* compile_command = nullptr;
+
+    int compile_result = 0;
     
     // check through flags for language, destination, and flags
     for(int i = 0; i < n_flags; i++) {
@@ -60,6 +85,10 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
         else if(strcmp(flags[i], "-profile-all") == 0) {profile = true; profile_all = true;}
         else if(strcmp(flags[i], "-c") == 0) {lang = 0;}
         else if(strcmp(flags[i], "-cpp") == 0 || strcmp(flags[i], "-c++") == 0) {lang = 1;}
+        else if(strcmp(flags[i], "-mingw") == 0 || strcmp(flags[i], "-gcc") == 0 || strcmp(flags[i], "-g++") == 0) {compiler = const_cast<char*>("mingw");}
+        else if(strcmp(flags[i], "-clang") == 0) {compiler = const_cast<char*>( "clang");}
+        else if(strcmp(flags[i], "-debug") == 0) {debug_build = true;}
+        else if(strcmp(flags[i], "-release") == 0) {debug_build = false;}
         else if(strncmp(flags[i], "-to-dir-", 8) == 0) {
             int index = strtol(flags[i] + 8, nullptr, 10);
             if(index >= 0 && index <= n_hotlist) {
@@ -77,6 +106,9 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
             compiler_flags_str[len_compiler_flags_str] = ' ';
             strcpy(compiler_flags_str + len_compiler_flags_str + 1, flags[i] + 4);
             len_compiler_flags_str += 1 + len;
+            if(strcmp(flags[i] + 4, "-O0") == 0 || strcmp(flags[i] + 4, "-O1") == 0 || strcmp(flags[i] + 4, "-O2") == 0 || strcmp(flags[i] + 4, "-O3") == 0) {
+                optimization_level = -1; // prevent default optimization level from taking place.
+            }
         }
     }
 
@@ -86,7 +118,16 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
     }
     // determine dest_name
     if(n_args < 2) {
-        dest_name = file_name_without_extension(args[0]);
+        if(dest_path != nullptr) {
+            // check if it's relative or absolute
+            if(is_path_absolute(dest_path)) {
+                goto after_setting_dest_path;
+            } else {
+                dest_path = add_str(dest_dir, dest_path);
+                goto after_setting_dest_path;
+            }
+        }
+        dest_name = file_name_without_extension(source_path);
         #ifdef _WIN32
         char* new_dest_name = new char[strlen(dest_name) + 4 + 1];
         strcpy(new_dest_name, dest_name);
@@ -104,6 +145,7 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
         dest_path = add_str(dest_dir, dest_name);
     }
 
+    after_setting_dest_path:
     // if the language is undetermined, determine it based on the file extension
     if(lang == -1) {
         if(ends_with(source_path, ".c")) {
@@ -112,57 +154,48 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
             lang = 1;
         } else {
             colout << RED << "Error: Language not specified and file extension not recognized\n" << RESET;
-            return 1;
+            EXIT_CODE = 1;
+            goto cleanup;
         }
     }
 
     // now, depending on language, build the command
-    char* compile_command = nullptr;
     if(lang == 0) {
         colout << B_WHITE << "C" << RESET << " file detected. " << "Compiling " << BR_CYAN << file_name(source_path) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
-        compile_command = new char[strlen(dest_path) + strlen(source_path) + strlen(compiler_flags_str) + 10];
-        strcpy(compile_command, "gcc ");
+        compile_command = new char[strlen(dest_path) + strlen(source_path) + strlen(compiler_flags_str) + 30];
+        strcpy(compile_command, compiler=="mingw" ? "gcc " : "clang ");
         strcat(compile_command, compiler_flags_str);
         strcat(compile_command, " -o ");
         strcat(compile_command, dest_path);
         strcat(compile_command, " ");
         strcat(compile_command, source_path);
+        if(debug_build) {strcat(compile_command, " -g");}
+        strcat(compile_command, optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":" -O0");
     } else if(lang == 1) {
         colout <<  B_WHITE << "C++" << RESET << " file detected. " << "Compiling " << BR_CYAN << file_name(source_path) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
-        compile_command = new char[strlen(dest_path) + strlen(source_path) + strlen(compiler_flags_str) + 10];
-        strcpy(compile_command, "g++ ");
+        compile_command = new char[strlen(dest_path) + strlen(source_path) + strlen(compiler_flags_str) + 30];
+        strcpy(compile_command, compiler=="mingw" ? "g++ " : "clang++ ");
         strcat(compile_command, compiler_flags_str);
         strcat(compile_command, " -o ");
         strcat(compile_command, dest_path);
         strcat(compile_command, " ");
         strcat(compile_command, source_path);
+        if(debug_build) {strcat(compile_command, " -g");}
+        strcat(compile_command, optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"");
     }
 
     // now, compile the file
-    int compile_result = system(compile_command);
+    compile_result = system(compile_command);
     if(compile_result != 0) {
         colout << RED << "Error: Compilation failed\n" << RESET;
-        delete[] curr_dir;
-        delete[] source_path;
-        delete[] dest_dir;
-        delete[] dest_name;
-        delete[] dest_path;
-        delete[] compiler_flags_str;
-        delete[] compile_command;
-        return 1;
+        EXIT_CODE = 1;
+        goto cleanup;
     } else if(!exec_on_compile) {
         colout << GREEN << "Compilation successful\n" << RESET;
     }
 
     if(!exec_on_compile) {
-        delete[] curr_dir;
-        delete[] source_path;
-        delete[] dest_dir;
-        delete[] dest_name;
-        delete[] dest_path;
-        delete[] compiler_flags_str;
-        delete[] compile_command;
-        return 0;
+        goto cleanup;
     }
 
     // now, run the command based on profile_level.
@@ -199,8 +232,18 @@ int compile(char** flags, char** args, int n_flags, int n_args) {
         heavy_profile(dest_path);
     }
 
+    cleanup:
     delete_settings();
-    return 0;
+    delete[] compiler;
+    delete[] curr_dir;
+    delete[] source_path;
+    if(dest_dir != curr_dir) {delete[] dest_dir;}
+    delete[] dest_name;
+    if(dest_path != output_path) {delete[] dest_path;} // otherwise freed in delete_settings();
+    delete[] compiler_flags_str;
+    delete[] compile_command;
+
+    return EXIT_CODE;
 }
 
 namespace bp = boost::process;

@@ -16,7 +16,8 @@ constexpr const char* const newline_split = "-----------------------------\n";
     << BR_CYAN << "Overview:\n" << RESET << overview << "\n\n" \
     << BR_CYAN << "Features:\n" << RESET << features << "\n\n" \
     << BR_CYAN << "Usage:\n" << print_usage << "\n\n" \
-    << BR_CYAN << "Options:\n" << RESET << options << "\n\n" \
+    << BR_CYAN << "Compilation Options:\n" << RESET << compilation_options << "\n\n" \
+    << BR_CYAN << "Configuration: \n" << RESET << config_options << "\n\n" \
     << "For more details, refer to the documentation or the source code comments.\n" \
     << newline_split
 
@@ -48,43 +49,60 @@ const char* features =
 - Compilation & Execution: Offers optional automatic execution upon successful compilation.\n\
 - Profiling: Measures execution time of compiled programs, with varying levels of profiling detail.\n\
 - Hotlist Directory Management: Allows output to specific directories in a configurable hotlist.\n\
-- Error Handling: Displays clear error messages for compilation issues and invalid commands.\n\
-- Configurable Settings: Configuration options, including preferences and hotlist management.";
+- Flexible Configurations: Customize compiler settings, flags, and paths via a `__casm_settings.ini` file.\n\
+- Command-Line Simplicity: Clean, intuitive syntax for managing settings and running commands.\n\
+- Configurable Output: Supports various naming conventions and directories for output files.\n\
+- Error Handling: Provides clear error messages for invalid commands, missing files, or compilation issues.";
 
 constexpr const char* const usage = 
 "casm [options] <source_file> [<output_file>]";
 
 #define print_usage \
-    BR_YELLOW << "casm" << BR_BLACK << " [options]" << CYAN << " <source_file> [<output_file>]" << RESET
+    BR_YELLOW << "casm" << BR_BLACK << " [compilation_options]" << CYAN << " <source_file> [<output_file>]" << RESET
 
 #define print_config_usage \
     BR_YELLOW << "casm" << BR_BLACK << " -config" << CYAN << " action\n" << \
     BR_YELLOW << "casm" << BR_BLACK << " -config" << CYAN << " param <args>" << RESET
 
-constexpr const char* const options = 
-"    -cpp, -c++     : Specify language as C++\n\
-    -c             : Specify language as C\n\
+constexpr const char* const compilation_options = 
+"-cpp, -c++     : Specify language as C++.\n\
+-c             : Specify language as C.\n\
 \n\
-    -exec          : Force automatic execution after compilation.\n\
-    -no-exec       : Prevent automatic execution after compilation.\n\
-    -no-profile    : Preven profiling.\n\
-    -profile       : Profiles execution time of the compiled program.\n\
-    -profile-all   : Profiles both compilation and execution time.\n\
-    -to-dir-n      : Output to directory hotlist[n].\n\
-    -arg-cmplr-arg : Pass `complr-arg` to the compiler.\n\
+-exec          : Force automatic execution after compilation.\n\
+-no-exec       : Prevent automatic execution after compilation.\n\
 \n\
-    -config        : Confiigure settings and preferences.\n\
+-no-profile    : Preven profiling.\n\
+-profile       : Profiles execution time of the compiled program.\n\
+-profile-all   : Profiles both compilation and execution time.\n\
 \n\
-    -help          : Display this help message.\n\
-    -help config   : Display help message for configuration options.\n\
-    -help commands : Display help message for commands.";
+-to-dir-n      : Output to directory hotlist[n].\n\
+\n\
+-debug         : Build with debugging symbols.\n\
+-release       : Build with optimizations.\n\
+\n\
+-mingw, -gcc, \n\
+-g++, -clang   : Specify compiler to use.";
+
+constexpr const char* const config_options =
+"casm -config          : Confiigure settings and preferences.\n\
+    delete-hotlist-n  : Delete nth element of the hotlist.\n\
+    add-hotlist-path  : Add a path to the hotlist.\n\
+    reset-settings    : Reset all settings to default.\n\
+    create-local      : Create a local settings file.\n\
+    setting-name <value> : Set a specific setting.\n\
+    See `casm -help config` for more details.";
 
 constexpr const char* const config_actions =
 "    -view               : View current configuration settings.\n\
     help               : Display this help message.\n\
+    create-local        : Create a local settings file.\n\
 \n\
+Global Settings:\n\
     delete-hotlist-n    : Delete the nth entry in the hotlist.\n\
     delete-hotlist-all  : Clear all entries from the hotlist.\n\
+    hotlist-n <path>    : Set the nth hotlist entry to <path>.\n\
+    add-path <path>     : Add <path> to the end of the hotlist.\n\
+\n\
     reset-settings      : Reset all settings to their default values.\n\
 \n\
     always-exec <bool>  : Set 'true' to automatically execute after compiling, 'false' to disable.\n\
@@ -92,9 +110,14 @@ constexpr const char* const config_actions =
                           0 - No profiling,\n\
                           1 - Basic profiling,\n\
                           2 - Detailed profiling.\n\
+    optimization-level <n> : Set optimization level\n\
 \n\
-    hotlist-n <path>    : Set the nth hotlist entry to <path>.\n\
-    add-path <path>     : Add <path> to the end of the hotlist.";
+Local Settings:\n\
+    c-cpp-compiler <compiler> : Set C/C++ compiler.\n\
+    debug-mode <bool>  : Set debug mode to true or false.\n\
+\n\
+    input-path <path>   : Set the default input path for the compiler.\n\
+    output-path <path>  : Set the default output path for the compiler.";
 
 constexpr const char* const config_examples =
 "    casm -config -view               : Display current configuration.\n\
@@ -119,7 +142,7 @@ Profiling:\n\
 \n\
 Miscellaneous:\n\
     -to-dir-n      : Specify an output directory by using hotlist index n.\n\
-    -arg-cmplr-arg : Pass `complr-arg` to the compiler.\n\
+    -arg-cmplr-arg : Pass `cmplr-arg` to the compiler.\n\
 \n\
 Help Options:\n\
     -help          : Display general help information for all commands.\n\
@@ -127,19 +150,24 @@ Help Options:\n\
     -help commands : Display detailed help information for each CASM command.\n\
 \n\
 Configuration Commands:\n\
-    -config            : Enter configuration mode.\n\
-    -config -view      : View the current configuration settings.\n\
-    -config help       : Display help information for configuration commands.\n\
-    -config delete-hotlist-n : Delete the nth entry from the hotlist.\n\
-    -config delete-hotlist-all : Clear all entries from the hotlist.\n\
-    -config reset-settings : Reset all settings to their default values.\n\
-    -config always-exec <bool> : Set automatic execution after compiling.\n\
-    -config profile-level <n>  : Set profiling detail level:\n\
+    -config                     : Enter configuration mode.\n\
+    -config -view               : View the current configuration settings.\n\
+    -config help                : Display help information for configuration commands.\n\
+    -config delete-hotlist-n    : Delete the nth entry from the hotlist.\n\
+    -config delete-hotlist-all  : Clear all entries from the hotlist.\n\
+    -config reset-settings      : Reset all settings to their default values.\n\
+    -config always-exec <bool>  : Set automatic execution after compiling.\n\
+    -config profile-level <n>   : Set profiling detail level:\n\
                                   0 - No profiling,\n\
                                   1 - Basic profiling,\n\
                                   2 - Detailed profiling.\n\
-    -config add-path <path> : Add <path> to the end of the hotlist.\n\
-    -config hotlist-n <path> : Set the nth hotlist entry to <path>.\n";
+    -config optimization-level <n> : Set optimization level\n\
+    -config add-path <path>     : Add <path> to the end of the hotlist.\n\
+    -config hotlist-n <path>    : Set the nth hotlist entry to <path>.\n\
+    -config c-cpp-compiler <compiler> : Set C/C++ compiler.\n\
+    -config debug-mode <bool>   : Set debug mode to true or false.\n\
+    -config input-path <path>   : Set the default input path for the compiler.\n\
+    -config output-path <path>  : Set the default output path for the compiler.";
 
 constexpr const char* const commands_examples =
 "    casm -cpp source.cpp           : Compile source.cpp as C++ code.\n\
@@ -152,3 +180,10 @@ constexpr const char* const commands_examples =
 
 
 constexpr const char* const settings_path = "casm_settings.ini";
+
+inline bool get_y_n(const char* msg) {
+    colout << CYAN << msg << YELLOW << " (y/n): ";
+    char c = getchar();
+    
+    return c == 'y' || c == 'Y';
+}

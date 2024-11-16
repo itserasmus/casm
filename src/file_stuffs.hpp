@@ -11,6 +11,8 @@
 #include <unistd.h>
 #endif
 
+char* get_curr_dir();
+
 char* get_executable_path() {
     #ifdef _WIN32
     char* buffer = new char[MAX_PATH];
@@ -38,9 +40,15 @@ char* get_executable_dir() {
     return buffer;
 }
 
-char* get_settings_absolute_path() {
+char* get_global_settings_absolute_path() {
     char* buffer = get_executable_dir();
     strcat(buffer, "casm_settings.ini");
+    return buffer;
+}
+
+char* get_local_settings_absolute_path() {
+    char* buffer = get_curr_dir();
+    strcat(buffer, "__casm_settings.ini");
     return buffer;
 }
 
@@ -76,6 +84,12 @@ char* add_str(const char* str1, const char* str2) {
     char* new_str = new char[strlen(str1) + strlen(str2) + 1];
     strcpy(new_str, str1);
     strcpy(new_str + strlen(str1), str2);
+    return new_str;
+}
+
+char* dup_str(const char* str) {
+    char* new_str = new char[strlen(str) + 1];
+    strcpy(new_str, str);
     return new_str;
 }
 

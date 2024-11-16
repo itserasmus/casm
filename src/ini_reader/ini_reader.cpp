@@ -234,6 +234,11 @@ void trim_str(std::string line, int &begin, int &end) {
 
 
 namespace ini_parse {
+char* parse_string(const char* str) {
+    char* ret_str = new char[strlen(str) + 1];
+    strcpy(ret_str, str);
+    return ret_str;
+}
 int parse_int(const char* str) {
     int n = 0;
     int len = strlen(str);
