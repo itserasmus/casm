@@ -59,7 +59,8 @@ Help:
 For more details, refer to the documentation or the source code comments.
 */
 
-#include <string.h>
+#include <vector>
+#include <string>
 
 #include "col_cout.hpp"
 #include "casm_consts.hpp"
@@ -74,35 +75,35 @@ int main(int argc, char** argv) {
     // parse argv
     int n_flags = 0;
     int n_args = 0;
-    char** flags = new char*[argc];
-    char** args = new char*[argc];
+    vector<string> flags;
+    vector<string> args;
 
     for(int i = 1; i < argc; i++) {
         if(argv[i][0] == '-') {
-            flags[n_flags++] = argv[i];
+            flags.push_back(argv[i]);
+            n_flags++;
         } else {
-            args[n_args++] = argv[i];
+            args.push_back(argv[i]);
+            n_args++;
         }
     }
     
 
     // check for special flags
     if(n_flags > 0) {
-        char* f = flags[0];
-        if(strcmp(f, "-help") == 0 || strcmp(f, "--help") == 0 || strcmp(f, "-h") == 0 || strcmp(f, "--h") == 0 || strcmp(f, "-?") == 0) {
+        string f = flags[0];
+        if(f == "-help" || f == "--help" || f == "-h" || f == "--h" || f == "-?") {
             if(n_args == 0) {
                 colout << print_help_msg;
-            } else if(strcmp(args[0], "config") == 0) {
+            } else if(args[0] == "config") {
                 colout << print_config_help_msg;
-            } else if(strcmp(args[0], "commands") == 0) {
+            } else if(args[0] == "commands") {
                 colout << print_commands_help_msg;
             } else {
                 colout << print_help_msg;
             }
-            delete[] flags;
-            delete[] args;
             return 0;
-        } else if(strcmp(f, "-config") == 0 || strcmp(f, "--config") == 0) {
+        } else if(f == "-config" || f == "--config") {
             return config_settings(flags, args, n_flags, n_args);
         }
     }

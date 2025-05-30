@@ -151,7 +151,7 @@ class ColorOut {
     }
     ~ColorOut() {
         std::lock_guard<std::mutex> lock(printf_mtx);
-        printf(cols[RESET]);
+        printf("%s", cols[RESET]);
     }
 
     ColorOut& operator<<(const char* value) {
@@ -245,7 +245,7 @@ class ColorOut {
     ColorOut& operator<<(const COLOR color) {
         if(enabled) {
             std::lock_guard<std::mutex> lock(printf_mtx);
-            printf(cols[color]);
+            printf("%s", cols[color]);
         }
         return *this;
     }
