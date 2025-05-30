@@ -23,7 +23,7 @@ straightforward compilation and execution in a single command.
 - GCC or compatible C/C++ compiler.
 
 ### Building CASM:
-- A premake for Windows x86_64 can be found in `.\pre_builds\`
+- A premake for Windows x86_64 and Windows MSYS2 can be found in `.\pre_builds\`
 1. Clone the repository:
 2. Navigate to the cloned directory.
 3. Run `g++ src\main.cpp -o casm.exe -O3 -pthread` or the equivalent command
