@@ -4,7 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdexcept>
+
+
+ini_value dummy;
 
 
 void trim_str(std::string, int&, int&);
@@ -18,21 +20,25 @@ INIReader::~INIReader() {
     delete[] values;
 }
 
-ini_value& INIReader::get_value(const char* section, const char* key) {
+ini_value& INIReader::get_value(const char* section, const char* key, bool& found) {
     for(int i = 0; i < n_values; i++) {
         if(strcmp(values[i].section, section) == 0 && strcmp(values[i].key, key) == 0) {
+            found = true;
             return values[i];
         }
     }
-    throw std::runtime_error("Key not found");
+    found = false;
+    return dummy;
 }
-ini_value& INIReader::get_value(const char* key) {
+ini_value& INIReader::get_value(const char* key, bool& found) {
     for(int i = 0; i < n_values; i++) {
         if(strcmp(values[i].key, key) == 0) {
+            found = true;
             return values[i];
         }
     }
-    throw std::runtime_error("Key not found");
+    found = false;
+    return dummy;
 }
 ini_value& INIReader::get_value_ensure(const char* section, const char* key, const char* def) {
     for(int i = 0; i < n_values; i++) {
@@ -55,6 +61,21 @@ void INIReader::add_value(const char* section, const char* key, const char* val)
     values[n_values] = value;
     n_values++;
 }
+
+void INIReader::set_value(const char* section, const char* key, const char* val) {
+    bool found;
+    ini_value value = get_value(section, key, found);
+    if(found) {value.set_val(val);}
+    else {add_value(section, key, val);}
+}
+
+void INIReader::set_value_no_dup(const char* section, const char* key, const char* val) {
+    bool found;
+    ini_value value = get_value(section, key, found);
+    if(found) {value.set_val_no_dup(val);}
+    else {add_value(section, key, val);}
+}
+
 void INIReader::remove_value(const char* section, const char* key) {
     int index = -1;
     for(int i = 0; i < n_values; i++) {

@@ -1,14 +1,15 @@
 #pragma once
 
-#include "col_cout.hpp"
 
-#include <chrono>
-#include <string>
 #ifdef _WIN32
-#include <windows.h>
+    #include <windows.h>
 #else
-#include <limits.h>
-#include <unistd.h>
+    #include <limits.h>
+    #include <unistd.h>
+    #include <cstring>
+#endif
+#ifdef __APPLE
+    #include <mach-o/dyld.h>
 #endif
 
 char* get_curr_dir();
@@ -17,13 +18,27 @@ char* get_executable_path() {
     #ifdef _WIN32
     char* buffer = new char[MAX_PATH];
     GetModuleFileNameA(nullptr, buffer, MAX_PATH);
-    #else
+    #elif defined(__linux__)
     char* buffer = new char[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", buffer, PATH_MAX);
     if(len == -1) {
-        return "";
+        char* empty = new char[1];
+        empty[0] = '\0';
+        return empty;
     }
     buffer[len] = '\0';
+    #else
+    uint32_t size = PATH_MAX;
+    char* buffer = new char[size];
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        delete[] buffer;
+        buffer = new char[size];
+        if (_NSGetExecutablePath(buffer, &size) != 0) {
+            delete[] buffer;
+            return nullptr;
+        }
+    }
+    return buffer;
     #endif
     return buffer;
 }
@@ -55,7 +70,7 @@ char* get_local_settings_absolute_path() {
 char* get_curr_dir() {
     #ifdef _WIN32
     char* buffer = new char[MAX_PATH + 2];
-    DWORD len = GetCurrentDirectoryA(MAX_PATH, buffer);
+    DWORD len = GetCurrentDirectoryA(MAX_PATH + 2, buffer);
     if(len == 0) {
         delete[] buffer;
         return nullptr;
@@ -69,7 +84,11 @@ char* get_curr_dir() {
     #endif
     int l = strlen(buffer);
     if(buffer[l-1] != '\\' && buffer[l-1] != '/') {
-        buffer[l] = '\\';
+        #ifdef _WIN32
+            buffer[l] = '\\';
+        #else
+            buffer[l] = '/';
+        #endif
         buffer[l+1] = '\0';
     }
     return buffer;

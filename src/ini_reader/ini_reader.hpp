@@ -36,9 +36,9 @@ class ini_value {
      * @param other The other ini_value to copy
      */
     ini_value(const ini_value &other) {
-        key = strdup(other.key);
-        section = strdup(other.section);
-        val = strdup(other.val);
+        key = other.key ? strdup(other.key) : nullptr;
+        section = other.section ? strdup(other.section) : nullptr;
+        val = other.val ? strdup(other.val) : nullptr;
     }
 
     /**
@@ -51,9 +51,9 @@ class ini_value {
         }
         this->~ini_value();
         
-        key = strdup(other.key);
-        section = strdup(other.section);
-        val = strdup(other.val);
+        key = other.key ? strdup(other.key) : nullptr;
+        section = other.section ? strdup(other.section) : nullptr;
+        val = other.val ? strdup(other.val) : nullptr;
         return *this;
     }
 
@@ -152,16 +152,18 @@ class INIReader {
      * @brief Gets the value of a key by section and key
      * @param section The section of the key
      * @param key The key of the value
+     * @param found Set to true if found, false otherwise
      * @return The value of the key, or an empty ini_value if the key does not exist
      */
-    ini_value& get_value(const char* section, const char* key);
+    ini_value& get_value(const char* section, const char* key, bool& found);
     /**
      * @brief Gets the value of a key by key
      * @param key The key of the value
+     * @param found Set to true if found, false otherwise
      * @return The value of the key, or an empty ini_value if the key does not exist
      * @note The *first* matching key will be returned
      */
-    ini_value& get_value(const char* key);
+    ini_value& get_value(const char* key, bool& found);
     /**
      * @brief Gets the value of a key by section and key, and creates it if it does not exist
      * @param section The section of the key
@@ -179,6 +181,22 @@ class INIReader {
      * @note To save changes, `write_ini_file()` must be called
      */
     void add_value(const char* section, const char* key, const char* val);
+    /**
+     * @brief Sets a value of the INI file, and adds it if it doesn't
+     * @param section The section of the key
+     * @param key The key of the value
+     * @param val The value of the key
+     * @note To save changes, `write_ini_file()` must be called
+     */
+    void set_value(const char* section, const char* key, const char* val);
+    /**
+     * @brief Sets a value of the INI file by stealing val, and adds it if it doesn't
+     * @param section The section of the key
+     * @param key The key of the value
+     * @param val The value of the key
+     * @note To save changes, `write_ini_file()` must be called
+     */
+    void set_value_no_dup(const char* section, const char* key, const char* val);
     /**
      * @brief Removes a value from the `ini_value` list
      * @param section The section of the key

@@ -4,6 +4,12 @@
 #include <string>
 #include <mutex>
 
+#ifndef _WIN32
+    #include <cstdlib>
+    #include <string>
+#endif
+
+
 /*
 comand names -> YELLOW
 command params -> CYAN
@@ -50,7 +56,7 @@ enum COLOR {
 };
 
 
-const char* bright_cols[] = {
+const char* const bright_cols[] = {
     // Regular
     "\u001b[30m", // BLACK
     "\u001b[34m", // BLUE
@@ -89,7 +95,7 @@ const char* bright_cols[] = {
     "",
     "\033[0m"       // RESET
 };
-const char* non_bright_cols[] = {
+const char* const non_bright_cols[] = {
     // Regular
     "\u001b[30m", // BLACK
     "\u001b[34m", // BLUE
@@ -132,18 +138,14 @@ const char* non_bright_cols[] = {
 
 std::mutex printf_mtx;
 
-#if defined(__unix__) || defined(__APPLE__)
-    const char* term = std::getenv("TERM");
-    supports_brightness = term && (std::string(term).find("xterm") != std::string::npos || std::string(term).find("color") != std::string::npos);
-#endif
 class ColorOut {
     private:
     bool supports_brightness = true;
-    const char** cols;
+    const char* const * cols;
     bool enabled = true;
     public:
     ColorOut() {
-        #if defined(__unix__) || defined(__APPLE__)
+        #ifndef _WIN32
         const char* term = std::getenv("TERM");
         supports_brightness = term && (std::string(term).find("xterm") != std::string::npos || std::string(term).find("color") != std::string::npos);
         #endif

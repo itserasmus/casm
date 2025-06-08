@@ -1,17 +1,30 @@
 #pragma once
 
+#include "casm_consts.hpp"
 #include "col_cout.hpp"
-#include "settings.hpp"
-#include <windows.h>
-#include <iostream>
+
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <unistd.h>
+    #include <sys/wait.h>
+    #include <sys/types.h>
+    #include <cstdio>
+    #include <cstring>
+    #include <cerrno>
+#endif
+
 #include <thread>
 #include <mutex>
 #include <string>
+#include <vector>
+#include <sstream>
 
 #include <chrono>
 
 using namespace std;
 
+#ifdef _WIN32
 void read_from_pipe(HANDLE pipe, bool is_error, chrono::steady_clock::time_point start_time) {
     CHAR buffer[4096];
     DWORD bytesRead;
@@ -108,3 +121,98 @@ void heavy_profile(string file_path) {
     }
     colout << CYAN << "(" << chrono::duration_cast<chrono::milliseconds>(end_time-start_time).count() << "ms)\n" << RESET;
 }
+#else
+void read_from_pipe(int fd, bool is_error, chrono::steady_clock::time_point start_time) {
+    char buffer[4096];
+    string line_buffer;
+    ssize_t bytesRead;
+
+    while ((bytesRead = read(fd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytesRead] = '\0';
+        line_buffer += buffer;
+
+        size_t pos;
+        while ((pos = line_buffer.find('\n')) != string::npos) {
+            string line = line_buffer.substr(0, pos);
+            line_buffer.erase(0, pos + 1);
+
+            auto curr_time = chrono::steady_clock::now();
+            long long ms = chrono::duration_cast<chrono::milliseconds>(curr_time - start_time).count();
+
+            printf_mtx.lock();
+            if (is_error)
+                printf("\u001b[31m%5lld | %s\n\u001b[0m", ms, line.c_str());
+            else
+                printf("%5lld | %s\n", ms, line.c_str());
+            printf_mtx.unlock();
+        }
+    }
+}
+void heavy_profile(string file_path, string execution_args) {
+    colout << "Heavy Profiling " << BR_CYAN << file_path << RESET << "...\n" << newline_split;
+
+    int out_pipe[2], err_pipe[2];
+    if (pipe(out_pipe) == -1) {
+        perror("pipe (out_pipe) failed");
+        exit(1);
+    }
+    if (pipe(err_pipe) == -1) {
+        perror("pipe (err_pipe) failed");
+        exit(1);
+    }
+
+    auto start_time = chrono::steady_clock::now();
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        // CHILD
+        dup2(out_pipe[1], STDOUT_FILENO);
+        dup2(err_pipe[1], STDERR_FILENO);
+
+        close(out_pipe[0]); close(out_pipe[1]);
+        close(err_pipe[0]); close(err_pipe[1]);
+
+        vector<char*> argv;
+        stringstream ss(execution_args);
+        string word;
+        char* wordC;
+        while (ss >> word) {
+            wordC = new char[word.size()+1];
+            strncpy(wordC, word.c_str(), word.size());
+            wordC[word.size()] = '\0';
+            argv.push_back(wordC);
+        }
+        argv.push_back(nullptr);
+
+        execvp(argv[0], argv.data());
+        
+        perror("execl"); // exec failed
+        _exit(127);
+    }
+
+    // PARENT
+    close(out_pipe[1]);
+    close(err_pipe[1]);
+
+    thread t_out(read_from_pipe, out_pipe[0], false, start_time);
+    thread t_err(read_from_pipe, err_pipe[0], true, start_time);
+
+    int status = 0;
+    waitpid(pid, &status, 0);
+
+    t_out.join();
+    t_err.join();
+
+    auto end_time = chrono::steady_clock::now();
+    colout << newline_split;
+
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        colout << GREEN << "Execution successful " << RESET;
+    } else {
+        colout << RED << "Execution failed with error code: " << WEXITSTATUS(status) << RESET;
+    }
+
+    colout << CYAN << "(" << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms)\n" << RESET;
+}
+#endif
+

@@ -44,7 +44,7 @@ v_1.1.0";
 
 constexpr const char* const overview = "CASM is a lightweight tool for compiling and executing small C/C++ projects, designed to simplify the development workflow for quick testing and prototyping. Unlike complex build systems like other libraries, CASM aims to provide straightforward compilation and execution in a single command.";
 
-const char* features =
+const char* const features =
 "- Language Detection: Automatically detects C or C++ based on file extensions, with manual override option.\n\
 - Compilation & Execution: Offers optional automatic execution upon successful compilation.\n\
 - Profiling: Measures execution time of compiled programs, with varying levels of profiling detail.\n\

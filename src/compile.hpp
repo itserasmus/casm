@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include "heavy_profile.hpp"
 #include "col_cout.hpp"
 #include "settings.hpp"
@@ -144,6 +143,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         } else {
             colout << RED << "Error: Language not specified and file extension not recognized\n" << RESET;
             EXIT_CODE = 1;
+            return 1;
         }
     }
 
@@ -178,6 +178,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     if(compile_result != 0) {
         colout << RED << "Error: Compilation failed\n" << RESET;
         EXIT_CODE = 1;
+        return 1;
     } else if(!exec_on_compile) {
         colout << GREEN << "Compilation successful\n" << RESET;
     }
