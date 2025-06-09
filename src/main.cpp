@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
             }
             return 0;
         } else if(f == "-config" || f == "--config") {
-            return config_settings(flags, args, n_flags, n_args);
+            return config_settings(flags, args);
         }
     }
     

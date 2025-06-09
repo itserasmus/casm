@@ -12,13 +12,13 @@
     #include <cstdio>
     #include <cstring>
     #include <cerrno>
+    #include <vector>
+    #include <sstream>
 #endif
 
 #include <thread>
 #include <mutex>
 #include <string>
-#include <vector>
-#include <sstream>
 
 #include <chrono>
 
@@ -56,7 +56,7 @@ void read_from_pipe(HANDLE pipe, bool is_error, chrono::steady_clock::time_point
     }
 }
 
-void heavy_profile(string file_path) {
+void heavy_profile(string file_path, string execution_args) {
     colout << "Heavy Profiling " << BR_CYAN << file_path << RESET << "...\n" << newline_split;
     
     HANDLE out_read, out_write, err_read, err_write;
@@ -76,7 +76,10 @@ void heavy_profile(string file_path) {
     si.hStdError = err_write;
     si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
-    string cmd_line = string("\"") + file_path + "\"";
+    string cmd_line = "\"" + file_path + "\"";
+    if(!execution_args.empty()) {
+        cmd_line += " " + execution_args;
+    }
     
     auto start_time = chrono::steady_clock::now();
 

@@ -1,20 +1,25 @@
 #pragma once
 
+#include "casm_consts.hpp"
 #include "settings.hpp"
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <windef.h>
 
 using namespace std;
 
-int config_settings(vector<string> flags, vector<string> args, int n_flags, int n_args) {
+string join_args_from_1(vector<string> args);
+
+int config_settings(vector<string> flags, vector<string> args) {
     if(init_settings()) {
         // Handle single argument cases first, (default to help)
 
-        if(n_flags >= 2 && (flags[1] == "-view" || flags[1] == "--view")) {
+        if(flags.size() >= 2 && (flags[1] == "-view" || flags[1] == "--view")) {
             print_settings();
             return 0;
         }        
-        if(n_args < 1 || args[0] == "help") {
+        if(args.size() < 1 || args[0] == "help") {
             colout << print_config_help_msg;
             return 0;
         }
@@ -55,7 +60,7 @@ int config_settings(vector<string> flags, vector<string> args, int n_flags, int 
             }
         }
         // Then, ensure 2 arguments before continuing
-        if(n_args < 2) {
+        if(args.size() < 2) {
             colout << RED << "Not enough arguments provided";
             return 1;
         }
@@ -73,26 +78,43 @@ int config_settings(vector<string> flags, vector<string> args, int n_flags, int 
         //    - debug-mode
         //    - input-path
         //    - output-path
+
+        bool modifying_local = std::find(flags.begin(), flags.end(), "-local") != flags.end();
+        if(modifying_local && !using_local_settings) {
+            colout << RESET << "No local settings file found. To create une, run:\n"
+                << YELLOW << "    casm " << BR_BLACK << "-config" << CYAN << " create-local";
+            return 1;
+        }
         if(args[0] == "always-exec") {
             always_exec = args[1] == "true";
+            local_always_exec_exists = modifying_local;
             return save_settings_and_exit();
         } else if(args[0] == "profile-level") {
             profile_level = args[1][0]=='2'?2:args[1][0]=='0'?0:1;
+            local_profile_level_exists = modifying_local;
             return save_settings_and_exit();
         } else if(args[0] == "optimization-level") {
             optimization_level = stoi(args[1]);
+            local_optimization_level_exists = modifying_local;
             return save_settings_and_exit();
         } else if(args[0] == "c-cpp-compiler") {
             c_cpp_compiler = args[1] == "mingw" || args[1] == "gcc" || args[1] == "g++" ? "gcc" : "clang";
+            local_c_cpp_compiler_exists = modifying_local;
             return save_settings_and_exit();
         } else if(args[0] == "debug-mode") {
             debug_mode = args[1] == "true";
             return save_settings_and_exit();
         } else if(args[0] == "input-path") {
-            input_path = args[1];
+            input_path = join_args_from_1(args);
             return save_settings_and_exit();
         } else if(args[0] == "output-path") {
-            output_path = args[1];
+            output_path = join_args_from_1(args);
+            return save_settings_and_exit();
+        } else if(args[0] == "compiler-flags") {
+            compiler_flags = join_args_from_1(args);
+            return save_settings_and_exit();
+        } else if(args[0] == "runtime-args") {
+            runtime_args = join_args_from_1(args);
             return save_settings_and_exit();
         } else if(args[0] == "add-hotlist-path") {
             hotlist.push_back(args[1]);
@@ -121,4 +143,14 @@ int config_settings(vector<string> flags, vector<string> args, int n_flags, int 
         }
     }
     return 0;
+}
+
+string join_args_from_1(vector<string> args) {
+    string s = "";
+    for(int i = 1; i < args.size();) {
+        if(args[i].find(' ') != string::npos) {s += '"' + args[i] + '"';}
+        else {s += args[i];};
+        if(++i != args.size()) {s += ' ';}
+    }
+    return s;
 }

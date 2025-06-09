@@ -49,6 +49,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     
     string curr_dir = get_curr_dir();
 
+    
     // path file is being read from (including filename)
     string source_path = n_args >= 1?
         is_path_absolute(args[0].c_str()) ? args[0] : curr_dir + args[0]
@@ -56,14 +57,15 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     if(n_args < 1) {
         colout << RESET << "Input file not specified. Compiling file " << CYAN << input_path << "\n";
     }
-
+    
     // path file will be saved to (excluding filename)
     string dest_dir;
     string dest_name;
     string dest_path = output_path;
-
-    string compiler_flags_str;
-
+    
+    string compiler_flags_str = compiler_flags;
+    string execution_args = runtime_args;
+    
     int EXIT_CODE = 0;
 
     // -1 for autochecking
@@ -93,9 +95,11 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
             if(index >= 0 && index <= n_hotlist) {
                 dest_dir = hotlist[index];
             }
+        } else if(flags[i].rfind("-earg", 0) == 0) {
+            string arg_val = flags[i].substr(5);
+            execution_args += arg_val;
         } else if(flags[i].rfind("-arg", 0) == 0) {
             string arg_val = flags[i].substr(4);
-            int len = flags[i].size() - 4;
             compiler_flags_str += arg_val;
             if(arg_val == "-O0" || arg_val == "-O1" || arg_val == "-O2" || arg_val == "-O3") {
                 optimization_level = -1; // prevent default optimization level from taking place.
@@ -188,10 +192,15 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     // profile_level = 1 => compile and run and profile total execution time
     // profile_level = 2 => compile and run and profile every output line
 
+    string run_command = dest_path;
+    if(!execution_args.empty()) {
+        run_command += " " + execution_args;
+    }
+
     if(!profile) {
         // profile_level = 0
         colout << "Running " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
-        int run_result = system(dest_path.c_str());
+        int run_result = system(run_command.c_str());
         colout << newline_split;
         if(run_result != 0) {
             colout << RED << "Execution failed with error code: " << run_result << "\n" << RESET;
@@ -202,7 +211,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         // profile_level = 1
         colout << "Profiling " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
         auto start = std::chrono::high_resolution_clock::now();
-        int run_result = system(dest_path.c_str());
+        int run_result = system(run_command.c_str());
         colout << newline_split;
         auto end = std::chrono::high_resolution_clock::now();
         if(run_result != 0) {
@@ -214,7 +223,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         colout << CYAN << " (" << duration.count() << "ms)\n" << RESET;
     } else if(profile_all) {
         // profile_level = 2
-        heavy_profile(dest_path);
+        heavy_profile(dest_path, execution_args);
     }
 
     delete_settings();
