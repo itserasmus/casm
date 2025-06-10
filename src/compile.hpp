@@ -1,5 +1,6 @@
 #pragma once
 
+#include "casm_consts.hpp"
 #include "heavy_profile.hpp"
 #include "col_cout.hpp"
 #include "settings.hpp"
@@ -30,6 +31,8 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     // -profile-all : profiles output as well
     // -mingw/-gcc/-g++/-clang : compiler to use
     // -debug/-release : build type
+    // -arg-comp-flag-1
+    // -eargexecution-arg-1
 
     // If input/output path not specified, it wil read from __casm_settings.ini. If not found,
     // it will infer output from input file name.
@@ -197,33 +200,74 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         run_command += " " + execution_args;
     }
 
+    if(profile_all) {
+        heavy_profile(dest_path, execution_args);
+        delete_settings();
+        return EXIT_CODE;
+    }
+
     if(!profile) {
         // profile_level = 0
         colout << "Running " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
-        int run_result = system(run_command.c_str());
-        colout << newline_split;
-        if(run_result != 0) {
-            colout << RED << "Execution failed with error code: " << run_result << "\n" << RESET;
-        } else {
-            colout << GREEN << "Execution successful\n" << RESET;
-        }
-    } else if(profile && !profile_all) {
-        // profile_level = 1
-        colout << "Profiling " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
-        auto start = std::chrono::high_resolution_clock::now();
-        int run_result = system(run_command.c_str());
-        colout << newline_split;
-        auto end = std::chrono::high_resolution_clock::now();
-        if(run_result != 0) {
-            colout << RED << "Execution failed with error code: " << run_result << RESET;
-        } else {
-            colout << GREEN << "Execution successful" << RESET;
-        }
+    } else {
+        colout << "Profling " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
+    }
+
+    vector<char*> argv;
+    stringstream ss(execution_args);
+    string word;
+    char* wordC;
+    while (ss >> word) {
+        wordC = new char[word.size()+1];
+        strncpy(wordC, word.c_str(), word.size());
+        wordC[word.size()] = '\0';
+        argv.push_back(wordC);
+    }
+    argv.push_back(nullptr);
+
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+    auto start = std::chrono::steady_clock::now();
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return 1;
+    } else if (pid == 0) {
+        execvp(dest_path.c_str(), argv.data());
+        perror("execvp");
+        exit(errno);
+    }
+    auto end = std::chrono::steady_clock::now();
+
+    for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
+
+    int status;
+    waitpid(pid, &status, 0);
+    int run_result;
+    if (WIFEXITED(status)) {
+        run_result = WEXITSTATUS(status);
+    } else {
+        run_result = 128 + WTERMSIG(status);
+    }
+#else
+std::string full_cmd = dest_path + " " + execution_args;
+
+auto start = std::chrono::steady_clock::now();
+int run_result = system(full_cmd.c_str());
+auto end = std::chrono::steady_clock::now();
+
+for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
+#endif
+
+    colout << newline_split;
+    if(run_result != 0) {
+        colout << RED << "Execution failed with error code: " << run_result << "\n" << RESET;
+    } else {
+        colout << GREEN << "Execution successful\n" << RESET;
+    }
+    
+    if(profile) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         colout << CYAN << " (" << duration.count() << "ms)\n" << RESET;
-    } else if(profile_all) {
-        // profile_level = 2
-        heavy_profile(dest_path, execution_args);
     }
 
     delete_settings();

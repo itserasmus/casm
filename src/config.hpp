@@ -5,7 +5,10 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+
+#ifdef _WIN32
 #include <windef.h>
+#endif
 
 using namespace std;
 
@@ -78,6 +81,8 @@ int config_settings(vector<string> flags, vector<string> args) {
         //    - debug-mode
         //    - input-path
         //    - output-path
+        //    - compiler-flags
+        //    - runtime-args
 
         bool modifying_local = std::find(flags.begin(), flags.end(), "-local") != flags.end();
         if(modifying_local && !using_local_settings) {

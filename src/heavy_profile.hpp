@@ -187,7 +187,7 @@ void heavy_profile(string file_path, string execution_args) {
         }
         argv.push_back(nullptr);
 
-        execvp(argv[0], argv.data());
+        execvp(file_path.c_str(), argv.data());
         
         perror("execl"); // exec failed
         _exit(127);

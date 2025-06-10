@@ -1,10 +1,10 @@
 # CASM - Compiler And Script Manager
-## v_1.2.0
+## v_1.3.0
 
 ## Overview:
-CASM is a lightweight tool for compiling and executing smallC/C++ projects,
+CASM is a lightweight tool for compiling and executing small C/C++ projects,
 designed to simplify the development workflow for quick testing and prototyping.
-Unlike complex build systems like other Make or CMake, CASM aims to provide
+Unlike more complex build systems such as Make or CMake, CASM aims to provide
 straightforward compilation and execution in a single command.
 
 ## Features:
@@ -23,29 +23,27 @@ straightforward compilation and execution in a single command.
 - GCC or compatible C/C++ compiler.
 
 ### Building CASM:
-- A premake for Windows x86_64 and Windows MSYS2 can be found in `.\pre_builds\`
-1. Clone the repository:
-2. Navigate to the cloned directory.
-3. Run `g++ src\main.cpp -o casm.exe -O3 -pthread` or the equivalent command
+- Prebuilt binaries for Linux, Windows x86_64 and MSYS2 can be found in `.\pre_builds\`.
+  These have been tested on NixOS, Windows 11, and Windows 11 MSYS2 respectively.
+1. Clone the repository: `git clone https://github.com/itserasmus/casm.git`
+2. Navigate to the cloned directory. `cd casm`
+3. Run `g++ src\main.cpp -o casm -O3 -pthread` or the equivalent command
     on your compiler.
-4. Make sure it works by running `casm.exe test.cpp`. You should get the output
-```
+4. Make sure it works by running `./casm test.cpp -eargHELLO -profile-all`. You should get the output
+```bash
 No local settings file found. To create one, run:
     casm -config create-local
-No output file specified. Outputting to test.exe
-C++ file detected. Compiling test.cpp to test.exe...
-Compilation successful
-Profiling test.exe...
+No output file specified. Outputting to test
+C++ file detected. Compiling test.cpp to test...
+Heavy Profiling /home/NixOS/coding/casm/test...
 -----------------------------
-Hello, World!
-Error1
-Hello, World!
-work donelol
-whoops
+    1 | Hello, World!
+  501 | Slept for 500ms. This line should be red.
+ 1001 | HELLO
 -----------------------------
-Execution successful (33ms)
+Execution successful (1002ms)
 ```
-5. If this does not work, make sure that casm.exe exists. If the error persists,
+5. If this does not work, make sure that `./casm` exists. If the error persists,
     refer to the troubleshooting section.
 
 ## Usage:
@@ -64,7 +62,8 @@ casm [-options] [\<source_file>] [\<output_file>]
 - -mingw, -gcc, 
 - -g++, -clang   : Specify compiler to use.
 - -to-dir-n      : Output to directory hotlist[n].
-- -arg-cmplr-arg : Pass `cmplr-arg` to the compiler.
+- -arg<cmplr-arg>: Pass `cmplr-arg` to the compiler.
+- -earg<exec-arg>: Pass `exec-arg` to the executable.
 - -config        : Configure settings and preferences.
 - -help          : Display this help message.
 - -help config   : Display help message for configuration options.
@@ -72,19 +71,20 @@ casm [-options] [\<source_file>] [\<output_file>]
 
 
 ## Examples:
-`casm test.cpp test.exe` - Compiles test.cpp to test.exe and executes it
-`casm test.cpp` - Compiles test.cpp to test.exe and executes it
-`casm test.cpp` - Compiles test.cpp to test.exe and does not execute it
-`casm test.cpp -profile` - Compiles test.cpp to test.exe and profiles its execution
-    time
-`casm test.cpp -profile-all` - Compiles test.cpp to test.exe, profiles its execution
-    time, and all logs
-`casm test.cpp -to-dir-1` - Compiles test.cpp to test.exe and outputs to directory
-    hotlist[1] (hotlist is zero indexed)
-`casm -config -help` - Displays detailed help message for configuration options
-`casm test.cpp -argO2` - Compiles test.cpp with flag `O2`.
-`casm test.cpp -arg-O2` - Compiles test.cpp with flag `-O2`. (note the difference
-    between `-argO2` and `-arg-O2`)
+```bash
+casm test.cpp test          # Compiles test.cpp to test and executes it
+casm test.cpp               # Compiles test.cpp to test and executes it
+casm test.cpp               # Compiles test.cpp to test and does not execute it
+casm test.cpp -profile      # Compiles test.cpp to test and profiles its execution time
+casm test.cpp -profile-all  # Compiles test.cpp to test, profiles its execution time, and all logs
+casm test.cpp -to-dir-1     # Compiles test.cpp to test and outputs to directory hotlist[1]
+                            # the hotlist can be configured with casm_settings.ini or `casm -config`
+casm -config -help          # Displays detailed help message for configuration options
+casm test.cpp -argO2        # Compiles test.cpp with flag `O2`.
+casm test.cpp -arg-O2       # Compiles test.cpp with flag `-O2`. (note the difference
+                            # between `-argO2` and `-arg-O2`)
+casm test.cpp -eargHello    # Runs test.cpp with argument `Hello`.
+```
 
 ## Contributing
 Contributions are welcome! For now, please submit any issues you find, and we will

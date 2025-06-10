@@ -1,53 +1,55 @@
 /*
 CASM - Compiler And Script Manager
-v_1.1.0
+v_1.3.0
 
 Overview:
-CASM is a lightweight tool for compiling and executing small C/C++ projects, designed to simplify the development
-workflow for quick testing and prototyping. Unlike complex build systems like other libraries, CASM aims to provide
+CASM is a lightweight tool for compiling and executing small C/C++ projects,
+designed to simplify the development workflow for quick testing and prototyping.
+Unlike more complex build systems such as Make or CMake, CASM aims to provide
 straightforward compilation and execution in a single command.
 
 Features:
-- Language Detection: Automatically detects C or C++ based on file extensions, with manual override option.
-- Compilation & Execution: Offers optional automatic execution upon successful compilation.
-- Profiling: Measures execution time of compiled programs, with varying levels of profiling detail.
+- Language Detection: Detects C or C++ based on file extension, with manual override.
+- Compilation & Execution: Offers optional automatic execution upon compilation.
+- Profiling: Measures execution time of compiled programs, with varying levels of profiling.
 - Hotlist Directory Management: Allows output to specific directories in a configurable hotlist.
-- Flexible Configurations: Customize compiler settings, flags, and paths via a `__casm_settings.ini` file.
+- Flexible Configurations: Customize compiler settings and paths via a `casm_settings.ini` file.
 - Command-Line Simplicity: Clean, intuitive syntax for managing settings and running commands.
 - Configurable Output: Supports various naming conventions and directories for output files.
-- Error Handling: Provides clear error messages for invalid commands, missing files, or compilation issues.
+- Error Handling: Clear error messages for invalid commands, missing files, or compilation issues.
 
 Usage:
     casm [-options] [<source_file>] [<output_file>]
 
-Compilation Options:
--cpp, -c++     : Specify language as C++.
--c             : Specify language as C.
-
--exec          : Force automatic execution after compilation.
--no-exec       : Prevent automatic execution after compilation.
-
--no-profile    : Preven profiling.
--profile       : Profiles execution time of the compiled program.
--profile-all   : Profiles both compilation and execution time.
-
--to-dir-n      : Output to directory hotlist[n].
-
--debug         : Build with debugging symbols.
--release       : Build with optimizations.
-
--mingw, -gcc, 
--g++, -clang   : Specify compiler to use.
+Options:
+- -cpp, -c++     : Specify language as C++
+- -c             : Specify language as C
+- -exec          : Force automatic execution after compilation.
+- -no-exec       : Prevent automatic execution after compilation.
+- -no-profile    : Prevent profiling.
+- -profile       : Profiles execution time of the compiled program.
+- -profile-all   : Profiles both compilation and execution time.
+- -debug         : Build with debugging symbols.
+- -release       : Build with optimizations.
+- -mingw, -gcc, 
+- -g++, -clang   : Specify compiler to use.
+- -to-dir-n      : Output to directory hotlist[n].
+- -argcmplr-arg  : Pass `cmplr-arg` to the compiler.
+- -eargexec-arg  : Pass `exec-arg` to the executable.
+- -config        : Configure settings and preferences.
+- -help          : Display this help message.
+- -help config   : Display help message for configuration options.
+- -help commands : Display detailed usage of each command.
 
 
 Configuration:
-casm -config          : Confiigure settings and preferences.
-    delete-hotlist-n  : Delete nth element of the hotlist.
-    add-hotlist-path  : Add a path to the hotlist.
-    reset-settings    : Reset all settings to default.
-    create-local      : Create a local settings file.
-    setting-name <value> : Set a specific setting.
-    See `casm -help config` for more details.
+casm -config                : Confiigure settings and preferences.
+    delete-hotlist-n        : Delete nth element of the hotlist.
+    add-hotlist-path        : Add a path to the hotlist.
+    reset-settings          : Reset all settings to default.
+    create-local            : Create a local settings file.
+    setting-name <value>    : Set a specific setting.
+See `casm -help config` for more details.
 
 
 Help:
