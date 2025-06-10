@@ -213,6 +213,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         colout << "Profling " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
     }
 
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     vector<char*> argv;
     stringstream ss(execution_args);
     string word;
@@ -225,7 +226,6 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     }
     argv.push_back(nullptr);
 
-#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     auto start = std::chrono::steady_clock::now();
     pid_t pid = fork();
     if (pid == -1) {
@@ -255,7 +255,9 @@ auto start = std::chrono::steady_clock::now();
 int run_result = system(full_cmd.c_str());
 auto end = std::chrono::steady_clock::now();
 
-for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
+#endif
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+    for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
 #endif
 
     colout << newline_split;
