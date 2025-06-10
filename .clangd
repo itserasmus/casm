@@ -1,2 +1,0 @@
-Diagnostics:
-  Suppress: ["odr-variable-in-header", "misc-definitions-in-headers"]
