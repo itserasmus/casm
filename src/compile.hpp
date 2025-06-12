@@ -159,11 +159,11 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         colout << B_WHITE << "C" << RESET << " file detected. " << "Compiling " << BR_CYAN
             << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
         compile_command = compiler=="mingw" ? "gcc " : "clang ";
-        compile_command += compiler_flags_str;
+        compile_command += source_path;
         compile_command += " -o ";
         compile_command += dest_path;
         compile_command += " ";
-        compile_command += source_path;
+        compile_command += compiler_flags_str;
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
     } else if(lang == 1) {
@@ -171,12 +171,14 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
             << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
 
         compile_command = compiler=="mingw" ? "g++ " : "clang++ ";
-        compile_command += compiler_flags_str;
-
+        
+        compile_command += source_path;
         compile_command += " -o ";
         compile_command += dest_path;
         compile_command += " ";
-        compile_command += source_path;
+
+        compile_command += compiler_flags_str;
+
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
     }
