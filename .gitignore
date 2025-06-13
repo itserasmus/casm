@@ -1,2 +1,5 @@
 /.vscode/
 .clangd
+casm.exe
+casm
+casm_settings.ini

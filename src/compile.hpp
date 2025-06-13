@@ -43,6 +43,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         return 1;
     }
 
+    int verbosity = 0; // -1 silent, 1 verbose
     bool exec_on_compile = always_exec;
     bool profile_all = profile_level >= 2;
     bool profile = profile_level >= 1;
@@ -58,7 +59,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         is_path_absolute(args[0].c_str()) ? args[0] : curr_dir + args[0]
         : is_path_absolute(input_path.c_str()) ? input_path : curr_dir + input_path;
     if(n_args < 1) {
-        colout << RESET << "Input file not specified. Compiling file " << CYAN << input_path << "\n";
+        colout << RESET << "Compiling file " << CYAN << input_path << "\n";
     }
     
     // path file will be saved to (excluding filename)
@@ -93,6 +94,8 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         else if(flags[i] == "-clang") {compiler = const_cast<char*>( "clang");}
         else if(flags[i] == "-debug") {debug_build = true;}
         else if(flags[i] == "-release") {debug_build = false;}
+        else if(flags[i] == "-silent") {verbosity = -1;}
+        else if(flags[i] == "-verbose") {verbosity = 1;}
         else if(flags[i].rfind("-to-dir-", 0) == 0) {
             int index = stoi(flags[i].substr(8));
             if(index >= 0 && index <= n_hotlist) {
@@ -117,19 +120,14 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     // determine dest_name
     if(n_args < 2) {
         if(!dest_path.empty()) {
-            // check if it's relative or absolute
-            if(is_path_absolute(dest_path.c_str())) {
-                goto after_setting_dest_path;
-            } else {
+            if(!is_path_absolute(dest_path.c_str())) {
                 dest_path = dest_dir + dest_path;
-                goto after_setting_dest_path;
             }
         }
         dest_name = file_name_without_extension(source_path.c_str());
         #ifdef _WIN32
         dest_name += ".exe";
         #endif
-        colout << RESET << "No output file specified. Outputting to " << CYAN << dest_name << "\n" << RESET;
         dest_path = dest_dir + dest_name;
     } else if(is_path_absolute(args[1].c_str())) { // if the output is an absolute path
         dest_name = file_name(args[1].c_str());
@@ -156,8 +154,10 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
 
     // now, depending on language, build the command
     if(lang == 0) {
-        colout << B_WHITE << "C" << RESET << " file detected. " << "Compiling " << BR_CYAN
-            << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
+        if(verbosity >= 0) {
+            colout << B_WHITE << "C" << RESET << " file detected. " << "Compiling " << BR_CYAN
+                << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
+        }
         compile_command = compiler=="mingw" ? "gcc " : "clang ";
         compile_command += source_path;
         compile_command += " -o ";
@@ -166,9 +166,18 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         compile_command += compiler_flags_str;
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
+        if(verbosity == 1) {
+            colout << B_WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"gcc ":"clang ") << CYAN << source_path
+                << BR_BLACK << " -o " << CYAN << dest_path << " " << BR_BLACK << compiler_flags_str;
+            if(debug_build) {colout << " -g";}
+            colout << (optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"")
+                << RESET << "\n";
+        }
     } else if(lang == 1) {
-        colout <<  B_WHITE << "C++" << RESET << " file detected. " << "Compiling " << BR_CYAN
-            << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
+        if(verbosity >= 0) {
+            colout <<  B_WHITE << "C++" << RESET << " file detected. " << "Compiling " << BR_CYAN
+                << file_name(source_path.c_str()) << RESET << " to " << BR_CYAN << dest_name << RESET << "..." << "\n";
+        }
 
         compile_command = compiler=="mingw" ? "g++ " : "clang++ ";
         
@@ -181,14 +190,22 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
 
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
+        if(verbosity == 1) {
+            colout << B_WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"g++ ":"clang++ ") << CYAN << source_path
+                << BR_BLACK << " -o " << CYAN << dest_path << " " << BR_BLACK << compiler_flags_str;
+            if(debug_build) {colout << " -g";}
+            colout << (optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"")
+                << RESET << "\n";
+        }
     }
     // now, compile the file
+
     compile_result = system(compile_command.c_str());
     if(compile_result != 0) {
         colout << RED << "Error: Compilation failed\n" << RESET;
         EXIT_CODE = 1;
         return 1;
-    } else if(!exec_on_compile) {
+    } else {
         colout << GREEN << "Compilation successful\n" << RESET;
     }
 

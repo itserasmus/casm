@@ -87,8 +87,6 @@ bool check_if_local_settings_ini_exist() {
         return true;
     }
     file.close();
-    colout << RESET << "No local settings file found. To create one, run:\n"
-        << YELLOW << "    casm " << BR_BLACK << "-config" << CYAN << " create-local\n";
     using_local_settings = false;
     return false;
 }
