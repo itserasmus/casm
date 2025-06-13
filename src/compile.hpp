@@ -212,6 +212,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         if(profile) {
             colout << " (" << chrono::duration_cast<chrono::milliseconds>(comp_end - comp_start).count() << "ms)" << RESET;
         }
+        colout << "\n";
     }
 
     // now, run the command based on profile_level.
@@ -293,14 +294,16 @@ auto end = std::chrono::steady_clock::now();
 
     colout << newline_split;
     if(run_result != 0) {
-        colout << RED << "Execution failed with error code: " << run_result << "\n" << RESET;
+        colout << RED << "Execution failed with error code: " << run_result << RESET;
     } else {
-        colout << GREEN << "Execution successful\n" << RESET;
+        colout << GREEN << "Execution successful" << RESET;
     }
     
     if(profile) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         colout << CYAN << " (" << duration.count() << "ms)\n" << RESET;
+    } else {
+        colout << "\n";
     }
 
     delete_settings();
