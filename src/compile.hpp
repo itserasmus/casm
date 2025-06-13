@@ -167,7 +167,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
         if(verbosity == 1) {
-            colout << B_WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"gcc ":"clang ") << CYAN << source_path
+            colout << WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"gcc ":"clang ") << CYAN << source_path
                 << BR_BLACK << " -o " << CYAN << dest_path << " " << BR_BLACK << compiler_flags_str;
             if(debug_build) {colout << " -g";}
             colout << (optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"")
@@ -191,7 +191,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         if(debug_build) {compile_command += " -g";}
         compile_command += optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"";
         if(verbosity == 1) {
-            colout << B_WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"g++ ":"clang++ ") << CYAN << source_path
+            colout << WHITE << "Compile Command: " << YELLOW << (compiler=="mingw"?"g++ ":"clang++ ") << CYAN << source_path
                 << BR_BLACK << " -o " << CYAN << dest_path << " " << BR_BLACK << compiler_flags_str;
             if(debug_build) {colout << " -g";}
             colout << (optimization_level==0?"":optimization_level==1?" -O1":optimization_level==2?" -O2":optimization_level==3?" -O3":"")
@@ -200,13 +200,18 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
     }
     // now, compile the file
 
+    auto comp_start = chrono::steady_clock::now();
     compile_result = system(compile_command.c_str());
+    auto comp_end = chrono::steady_clock::now();
     if(compile_result != 0) {
         colout << RED << "Error: Compilation failed\n" << RESET;
         EXIT_CODE = 1;
         return 1;
     } else {
-        colout << GREEN << "Compilation successful\n" << RESET;
+        colout << GREEN << "Compilation successful";
+        if(profile) {
+            colout << " (" << chrono::duration_cast<chrono::milliseconds>(comp_end - comp_start).count() << "ms)" << RESET;
+        }
     }
 
     // now, run the command based on profile_level.
@@ -227,10 +232,17 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
 
     if(!profile) {
         // profile_level = 0
-        colout << "Running " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
+        colout << "Running " << BR_CYAN << dest_name << RESET << "...\n";
     } else {
-        colout << "Profling " << BR_CYAN << dest_name << RESET << "...\n" << newline_split;
+        colout << "Profling " << BR_CYAN << dest_name << RESET << "...\n";
     }
+    if(verbosity == 1) {
+        colout << "Run Command: " << CYAN << dest_path;
+        if(!execution_args.empty()) {
+            colout << BR_BLACK << " " << execution_args;
+        }
+    }
+    colout << RESET << newline_split;
 
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     vector<char*> argv;
