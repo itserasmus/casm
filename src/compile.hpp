@@ -269,12 +269,13 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         perror("execvp");
         exit(errno);
     }
-    auto end = std::chrono::steady_clock::now();
-
-    for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
-
+    
     int status;
     waitpid(pid, &status, 0);
+    auto end = std::chrono::steady_clock::now();
+    
+    for(int i = 0; argv[i] != nullptr; i++) {delete[] argv[i];}
+    
     int run_result;
     if (WIFEXITED(status)) {
         run_result = WEXITSTATUS(status);
