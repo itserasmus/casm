@@ -40,7 +40,7 @@ constexpr const char* const newline_split = "-----------------------------\n";
 
 constexpr const char* const title = 
 "CASM - Compiler And Script Manager\n\
-v_1.3.0";
+v_1.3.1";
 
 constexpr const char* const overview = "CASM is a lightweight tool for compiling and executing small C/C++ projects, \
 designed to simplify the development workflow for quick testing and prototyping. Unlike more complex build systems such \

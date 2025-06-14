@@ -1,5 +1,5 @@
 # CASM - Compiler And Script Manager
-## v_1.3.0
+## v_1.3.1
 
 ## Overview:
 CASM is a lightweight tool for compiling and executing small C/C++ projects,
