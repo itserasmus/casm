@@ -242,6 +242,7 @@ int compile(vector<string> flags, vector<string> args, int n_flags, int n_args) 
         if(!execution_args.empty()) {
             colout << BR_BLACK << " " << execution_args;
         }
+        colout << "\n";
     }
     colout << RESET << newline_split;
 

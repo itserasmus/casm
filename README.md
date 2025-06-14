@@ -13,7 +13,8 @@ straightforward compilation and execution in a single command.
 - Profiling: Measures execution time of compiled programs, with varying levels of profiling.
 - Hotlist Directory Management: Allows output to specific directories in a configurable hotlist.
 - Flexible Configurations: Customize compiler settings and paths via a `casm_settings.ini` file.
-- Command-Line Simplicity: Clean, intuitive syntax for managing settings and running commands.
+- Command-Line Simplicity: Clean, intuiti
+ve syntax for managing settings and running commands.
 - Configurable Output: Supports various naming conventions and directories for output files.
 - Error Handling: Clear error messages for invalid commands, missing files, or compilation issues.
 
